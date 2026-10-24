@@ -5,7 +5,7 @@ import { auth } from '@/auth'
 export default auth(req => {
   const { pathname } = req.nextUrl
   const logged = !!req.auth
-  const isPublic = pathname === '/' || pathname.startsWith('/api/auth') || pathname.startsWith('/api/test')
+  const isPublic = pathname === '/' || pathname === '/privacidad' || pathname === '/terminos' || pathname.startsWith('/api/auth') || pathname.startsWith('/api/test')
 
   if (!logged && !isPublic) {
     if (pathname.startsWith('/api/')) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
