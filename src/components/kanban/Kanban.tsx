@@ -10,7 +10,7 @@ import {
   TrendingUp, Undo2, X, Code2, ShieldCheck, Pencil, AlertTriangle, CircleHelp,
 } from 'lucide-react'
 
-import type { Order, Status, View, Toast } from "@/lib/types";
+import type { Order, Status, View, Toast, Ops } from "@/lib/types";
 import { STATUSES, STATUS_META, seedOrders, money, shortDate } from "@/lib/orders";
 import {Btn,Badge,Empty} from "@/components/ui/primitives";
 export function KanbanCard({o,onMove,dragging=false,dragHandle}:{o:Order;onMove?:(s:Status)=>void;dragging?:boolean;dragHandle?:Record<string,unknown>}) {
@@ -25,9 +25,10 @@ function Draggable({o,move}:{o:Order;move:(s:Status)=>void}) {
   const {attributes,listeners,setNodeRef,transform,isDragging}=useDraggable({id:o.id})
   return <div ref={setNodeRef} style={{transform:transform?`translate3d(${transform.x}px,${transform.y}px,0)`:undefined,opacity:isDragging?0.35:1}}><KanbanCard o={o} onMove={move} dragHandle={{...listeners,...attributes}}/></div>
 }
-export function Kanban({orders,setOrders,notify}:{orders:Order[];setOrders:React.Dispatch<React.SetStateAction<Order[]>>;notify:(t:Omit<Toast,'id'>)=>void}) {
+export function Kanban({orders,ops,loading}:{orders:Order[];ops:Ops;loading:boolean}) {
   const [active,setActive]=useState<Order|null>(null), sensors=useSensors(useSensor(PointerSensor,{activationConstraint:{distance:6}}))
-  const move=(o:Order,s:Status)=>{if(o.status===s)return;const old=o.status;setOrders(x=>x.map(v=>v.id===o.id?{...v,status:s}:v));notify({kind:'success',text:`${o.id} movido a “${s}”.`,undo:()=>setOrders(x=>x.map(v=>v.id===o.id?{...v,status:old}:v))})}
+  const move=(o:Order,s:Status)=>{if(o.status===s)return;void ops.setStatus(o.id,s,{text:`${o.id} movido a “${s}”.`,undo:true})}
   const end=(e:DragEndEvent)=>{if(active&&e.over&&STATUSES.includes(e.over.id as Status))move(active,e.over.id as Status);setActive(null)}
-  return <div className="page"><div className="kanban-info"><span><Sparkles/>Los cambios se reflejan al instante en todo el demo.</span><span><GripVertical/>Arrastra desde el asa o usa el menú de acciones.</span></div><DndContext sensors={sensors} onDragStart={(e:DragStartEvent)=>setActive(orders.find(o=>o.id===e.active.id)||null)} onDragEnd={end} onDragCancel={()=>setActive(null)}><div className="kanban-board">{STATUSES.map(s=><Column key={s} status={s} orders={orders.filter(o=>o.status===s)} move={move}/>)}</div><DragOverlay>{active&&<KanbanCard o={active} dragging/>}</DragOverlay></DndContext></div>
+  if(loading)return <div className="page"><div className="kanban-info"><span><RefreshCw className="spin"/>Cargando pedidos…</span></div></div>
+  return <div className="page"><div className="kanban-info"><span><Sparkles/>Los cambios se guardan en la base de datos y se sincronizan entre dispositivos.</span><span><GripVertical/>Arrastra desde el asa o usa el menú de acciones.</span></div><DndContext sensors={sensors} onDragStart={(e:DragStartEvent)=>setActive(orders.find(o=>o.id===e.active.id)||null)} onDragEnd={end} onDragCancel={()=>setActive(null)}><div className="kanban-board">{STATUSES.map(s=><Column key={s} status={s} orders={orders.filter(o=>o.status===s)} move={move}/>)}</div><DragOverlay>{active&&<KanbanCard o={active} dragging/>}</DragOverlay></DndContext></div>
 }

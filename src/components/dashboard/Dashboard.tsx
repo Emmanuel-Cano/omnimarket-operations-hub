@@ -61,7 +61,9 @@ import {
   CircleHelp,
 } from "lucide-react";
 
-import type { Order, Status, View, Toast } from "@/lib/types";
+import type { Activity, Order, Status, View, Toast } from "@/lib/types";
+import { Assistant } from "@/components/dashboard/Assistant";
+import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import {
   STATUSES,
   STATUS_META,
@@ -75,13 +77,12 @@ function Kpi({
   label,
   value,
   delta,
-  up = true,
   tip,
 }: {
   icon: any;
   label: string;
   value: string;
-  delta: string;
+  delta: number | null;
   up?: boolean;
   tip: string;
 }) {
@@ -97,18 +98,32 @@ function Kpi({
       </div>
       <p>{label}</p>
       <strong>{value}</strong>
-      <span className={up ? "delta up" : "delta down"}>
-        {up ? <ArrowUpRight /> : <ArrowDownRight />}
-        {delta} <small>vs. periodo anterior</small>
-      </span>
+      {delta === null ? (
+        <span className="delta">
+          <small>Sin periodo anterior para comparar</small>
+        </span>
+      ) : (
+        <span className={delta >= 0 ? "delta up" : "delta down"}>
+          {delta >= 0 ? <ArrowUpRight /> : <ArrowDownRight />}
+          {Math.abs(delta).toFixed(1)}% <small>vs. periodo anterior</small>
+        </span>
+      )}
     </article>
   );
 }
 export function Dashboard({
   orders,
+  activity,
+  loading,
+  error,
+  onRefresh,
   setView,
 }: {
   orders: Order[];
+  activity: Activity[];
+  loading: boolean;
+  error: string;
+  onRefresh: () => Promise<void> | void;
   setView: (v: View) => void;
 }) {
   const [period, setPeriod] = useState(30);
@@ -128,6 +143,21 @@ export function Dashboard({
   const total = periodOrders.reduce((a, o) => a + o.price * o.quantity, 0),
     costs = periodOrders.reduce((a, o) => a + o.cost * o.quantity, 0),
     avg = total / Math.max(periodOrders.length, 1);
+  const prevFirst = new Date(first);
+  prevFirst.setDate(first.getDate() - period);
+  const prevLast = new Date(first);
+  prevLast.setDate(first.getDate() - 1);
+  const prevOrders = orders.filter((o) => {
+    const d = new Date(`${o.date}T12:00:00`);
+    return d >= prevFirst && d <= prevLast;
+  });
+  const prevTotal = prevOrders.reduce((a, o) => a + o.price * o.quantity, 0),
+    prevCosts = prevOrders.reduce((a, o) => a + o.cost * o.quantity, 0),
+    prevAvg = prevTotal / Math.max(prevOrders.length, 1);
+  const pct = (cur: number, prev: number) =>
+    prev > 0 ? ((cur - prev) / prev) * 100 : null;
+  const marginPct = total ? ((total - costs) / total) * 100 : 0,
+    prevMarginPct = prevTotal ? ((prevTotal - prevCosts) / prevTotal) * 100 : 0;
   const chart = Array.from({ length: period }, (_, i) => {
     const date = new Date(first);
     date.setDate(first.getDate() + i);
@@ -139,12 +169,14 @@ export function Dashboard({
       margen: day.reduce((a, o) => a + (o.price - o.cost) * o.quantity, 0),
     };
   });
-  const refresh = () => {
+  const refresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 650);
+    await onRefresh();
+    setRefreshing(false);
   };
   return (
     <div className="page">
+      {error && !loading && <div className="kanban-info"><span><AlertTriangle />{error}</span></div>}
       <div className="page-actions">
         <div className="segmented">
           {[7, 30, 90].map((n) => (
@@ -167,29 +199,28 @@ export function Dashboard({
           icon={CircleDollarSign}
           label="Ingresos totales"
           value={money(total)}
-          delta="12.8%"
+          delta={pct(total, prevTotal)}
           tip="Ingresos brutos de los pedidos del periodo"
         />
         <Kpi
           icon={ShoppingBag}
           label="Pedidos totales"
           value={String(periodOrders.length)}
-          delta="8.2%"
+          delta={pct(periodOrders.length, prevOrders.length)}
           tip="Pedidos registrados en el periodo"
         />
         <Kpi
           icon={TrendingUp}
           label="Ticket promedio"
           value={money(avg)}
-          delta="4.1%"
+          delta={pct(avg, prevAvg)}
           tip="Ingreso promedio por pedido"
         />
         <Kpi
           icon={BarChart3}
           label="Margen bruto"
           value={`${total ? (((total - costs) / total) * 100).toFixed(1) : "0.0"}%`}
-          delta="1.3%"
-          up={false}
+          delta={prevTotal ? marginPct - prevMarginPct : null}
           tip="Ingresos menos costos, como porcentaje"
         />
       </section>
@@ -348,6 +379,10 @@ export function Dashboard({
             </div>
           ))}
         </article>
+      </section>
+      <section className="dashboard-grid two">
+        <Assistant />
+        <ActivityFeed activity={activity} />
       </section>
     </div>
   );

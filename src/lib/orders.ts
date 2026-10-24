@@ -13,7 +13,7 @@ const products = [
 export const seedOrders: Order[] = people.map((customer, i) => {
   const p = products[i % products.length]
   const d = new Date(2025, 4, 30 - i)
-  return { id: `OM-${1048 - i}`, customer, email: `${customer.split(' ')[0].toLowerCase()}@correo.mx`, product: p[0] as string, quantity: i % 5 === 0 ? 2 : 1, price: p[1] as number, cost: p[2] as number, date: d.toISOString().slice(0,10), status: STATUSES[i % 4] }
+  return { id: `OM-${1048 - i}`, customer, email: `${customer.split(' ')[0].normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()}@correo.mx`, product: p[0] as string, quantity: i % 5 === 0 ? 2 : 1, price: p[1] as number, cost: p[2] as number, date: d.toISOString().slice(0,10), status: STATUSES[i % 4] }
 })
 export const money = (n: number) => n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })
 export const shortDate = (s: string) => new Intl.DateTimeFormat('es-MX', { day:'2-digit', month:'short' }).format(new Date(`${s}T12:00:00`))

@@ -18,7 +18,7 @@ export function Sidebar({ view, setView, collapsed, setCollapsed, mobile, close 
   return <aside className={`sidebar ${collapsed?'collapsed':''} ${mobile?'mobile-open':''}`}>
     <div className="side-head"><div className="brand"><span className="logo">O</span>{!collapsed&&<span>OmniMarket</span>}</div>{mobile&&<Btn variant="ghost" onClick={close} aria-label="Cerrar"><X/></Btn>}</div>
     <nav>{nav.map(({id,label,icon:Icon})=><button key={id} className={view===id?'active':undefined} aria-current={view===id?'page':undefined} onClick={()=>{setView(id);close()}}><Icon/><span>{label}</span></button>)}</nav>
-    <div className="side-bottom">{!collapsed&&<div className="mini-upgrade"><Sparkles/><strong>Demo local</strong><span>Lista para conectar tu API.</span></div>}<button className="collapse" onClick={()=>setCollapsed(!collapsed)}>{collapsed?<PanelLeftOpen/>:<PanelLeftClose/>}<span>Contraer menú</span></button></div>
+    <div className="side-bottom">{!collapsed&&<div className="mini-upgrade"><Sparkles/><strong>PostgreSQL en vivo</strong><span>Datos sincronizados con la API.</span></div>}<button className="collapse" onClick={()=>setCollapsed(!collapsed)}>{collapsed?<PanelLeftOpen/>:<PanelLeftClose/>}<span>Contraer menú</span></button></div>
   </aside>
 }
 
