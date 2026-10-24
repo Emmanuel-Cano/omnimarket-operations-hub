@@ -1,0 +1,15 @@
+name: Keep alive
+
+# Despierta la app y la base cada ~5 min para cumplir el SLA de <300 ms (evita arranques en frío).
+# Actívalo definiendo la variable de repositorio APP_URL (Settings → Secrets and variables → Actions → Variables).
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    if: ${{ vars.APP_URL != '' }}
+    steps:
+      - run: curl -fsS --max-time 60 "${{ vars.APP_URL }}/api/test/analytics?page=1&limit=1" -o /dev/null -w "ok %{http_code} %{time_total}s\n"

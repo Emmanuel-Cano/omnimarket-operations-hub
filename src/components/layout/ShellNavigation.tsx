@@ -27,8 +27,8 @@ const viewCopy = {
   orders: ['Gestión de pedidos','Consulta, crea y administra todos tus pedidos.'],
   kanban: ['Flujo de pedidos','Mueve pedidos entre etapas y mantén al equipo sincronizado.'],
 }
-export function Header({view,theme,toggleTheme,onLogout,openMenu}:{view:View;theme:string;toggleTheme:()=>void;onLogout:()=>void;openMenu:()=>void}) {
+export function Header({view,user,theme,toggleTheme,onLogout,openMenu}:{view:View;user?:{name?:string|null;email?:string|null;image?:string|null};theme:string;toggleTheme:()=>void;onLogout:()=>void;openMenu:()=>void}) {
   return <header className="topbar"><div className="top-title"><Btn variant="ghost" className="mobile-menu" onClick={openMenu}><Menu/></Btn><div><h2>{viewCopy[view][0]}</h2><p>{viewCopy[view][1]}</p></div></div>
-    <div className="user-actions"><Btn variant="ghost" aria-label="Notificaciones"><Bell/></Btn><Btn variant="ghost" onClick={toggleTheme} aria-label="Cambiar tema">{theme==='dark'?<Sun/>:<Moon/>}</Btn><div className="user"><span className="avatar">AM</span><div><strong>Andrea Morales</strong><span>andrea@omnimarket.mx</span></div></div><Btn variant="secondary" onClick={onLogout}><LogOut/><span className="logout-label">Cerrar sesión</span></Btn></div>
+    <div className="user-actions"><Btn variant="ghost" aria-label="Notificaciones"><Bell/></Btn><Btn variant="ghost" onClick={toggleTheme} aria-label="Cambiar tema">{theme==='dark'?<Sun/>:<Moon/>}</Btn><div className="user"><span className="avatar">{(user?.name||user?.email||'?').split(/[\s@]/).filter(Boolean).slice(0,2).map(w=>w[0]?.toUpperCase()).join('')}</span><div><strong>{user?.name||user?.email}</strong><span>{user?.email}</span></div></div><Btn variant="secondary" onClick={onLogout}><LogOut/><span className="logout-label">Cerrar sesión</span></Btn></div>
   </header>
 }

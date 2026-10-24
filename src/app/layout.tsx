@@ -1,4 +1,5 @@
 import './globals.css';
 import type {Metadata} from 'next';
+import {Providers} from '@/components/Providers';
 export const metadata:Metadata={title:'OmniMarket Operations Hub',description:'Panel de administración e-commerce'};
-export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="es-MX" suppressHydrationWarning><body>{children}</body></html>}
+export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="es-MX" suppressHydrationWarning><body><Providers>{children}</Providers></body></html>}

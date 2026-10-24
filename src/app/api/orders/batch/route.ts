@@ -1,22 +1,19 @@
 import { NextResponse } from 'next/server'
-import { z } from 'zod'
-import { STATUSES } from '@/lib/orders'
-import type { Status } from '@/lib/types'
-import { log, prisma, toDb } from '@/lib/server/orders'
-
-const body = z.object({ ids: z.array(z.string()).min(1).max(200), action: z.enum(['status', 'delete']), status: z.enum(STATUSES as [Status, ...Status[]]).optional() })
+import { batchSchema } from '@/lib/schemas'
+import { getActor, log, prisma, toDb } from '@/lib/server/orders'
 
 export async function POST(req: Request) {
-  const p = body.safeParse(await req.json().catch(() => null))
+  const actor = await getActor()
+  const p = batchSchema.safeParse(await req.json().catch(() => null))
   if (!p.success || (p.data.action === 'status' && !p.data.status)) return NextResponse.json({ error: 'Solicitud no válida' }, { status: 400 })
   const { ids, action, status } = p.data
   await prisma.$transaction(async tx => {
     if (action === 'status') {
       await tx.order.updateMany({ where: { id: { in: ids } }, data: { status: toDb[status!] } })
-      for (const id of ids) await log(tx, id, 'STATUS', `Estado (lote) → ${status}`)
+      for (const id of ids) await log(tx, id, 'STATUS', `Estado (lote) → ${status}`, actor)
     } else {
       await tx.order.deleteMany({ where: { id: { in: ids } } })
-      for (const id of ids) await log(tx, id, 'DELETE', 'Pedido eliminado (lote)')
+      for (const id of ids) await log(tx, id, 'DELETE', 'Pedido eliminado (lote)', actor)
     }
   })
   return NextResponse.json({ ok: true, count: ids.length })

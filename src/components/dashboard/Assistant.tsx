@@ -1,6 +1,7 @@
 "use client";
 import { useState } from 'react'
-import { Sparkles, Send, RefreshCw } from 'lucide-react'
+import { Sparkles, Send } from 'lucide-react'
+import { LinesSkeleton } from '@/components/ui/skeletons'
 
 const SUGGESTIONS = ['¿Qué pedidos llevan más de 3 días sin avanzar?', '¿Cuál es mi producto más rentable?', '¿Quién es mi mejor cliente?', 'Dame un resumen del día']
 
@@ -26,8 +27,8 @@ export function Assistant() {
     <div className="assistant-chips">{SUGGESTIONS.map(s => <button key={s} disabled={busy} onClick={() => ask(s)}>{s}</button>)}</div>
     <form className="assistant-form" onSubmit={e => { e.preventDefault(); ask(q) }}>
       <input value={q} onChange={e => setQ(e.target.value)} placeholder="Ej. ¿Qué producto deja más margen?" maxLength={400}/>
-      <button type="submit" disabled={busy || !q.trim()} aria-label="Enviar">{busy ? <RefreshCw className="spin"/> : <Send/>}</button>
+      <button type="submit" disabled={busy || !q.trim()} aria-label="Enviar"><Send/></button>
     </form>
-    <div className="assistant-log">{chat.map((m, i) => <div key={i}><b>{m.q}</b><p>{m.a}</p>{m.source === 'claude' && <small>Respuesta generada por Claude</small>}</div>)}</div>
+    <div className="assistant-log">{busy&&<div><LinesSkeleton lines={3}/></div>}{chat.map((m, i) => <div key={i}><b>{m.q}</b><p>{m.a}</p>{m.source === 'claude' && <small>Respuesta generada por Claude</small>}</div>)}</div>
   </article>
 }

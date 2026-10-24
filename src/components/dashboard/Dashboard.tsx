@@ -72,6 +72,8 @@ import {
   shortDate,
 } from "@/lib/orders";
 import { Btn, Badge } from "@/components/ui/primitives";
+import { summarize, percentChange } from "@/lib/metrics";
+import { DashboardSkeleton } from "@/components/ui/skeletons";
 function Kpi({
   icon: Icon,
   label,
@@ -140,9 +142,6 @@ export function Dashboard({
       new Date(`${o.date}T12:00:00`) >= first &&
       new Date(`${o.date}T12:00:00`) <= latest,
   );
-  const total = periodOrders.reduce((a, o) => a + o.price * o.quantity, 0),
-    costs = periodOrders.reduce((a, o) => a + o.cost * o.quantity, 0),
-    avg = total / Math.max(periodOrders.length, 1);
   const prevFirst = new Date(first);
   prevFirst.setDate(first.getDate() - period);
   const prevLast = new Date(first);
@@ -151,13 +150,14 @@ export function Dashboard({
     const d = new Date(`${o.date}T12:00:00`);
     return d >= prevFirst && d <= prevLast;
   });
-  const prevTotal = prevOrders.reduce((a, o) => a + o.price * o.quantity, 0),
-    prevCosts = prevOrders.reduce((a, o) => a + o.cost * o.quantity, 0),
-    prevAvg = prevTotal / Math.max(prevOrders.length, 1);
-  const pct = (cur: number, prev: number) =>
-    prev > 0 ? ((cur - prev) / prev) * 100 : null;
-  const marginPct = total ? ((total - costs) / total) * 100 : 0,
-    prevMarginPct = prevTotal ? ((prevTotal - prevCosts) / prevTotal) * 100 : 0;
+  const cur = summarize(periodOrders),
+    prev = summarize(prevOrders);
+  const total = cur.revenue,
+    avg = cur.avgTicket,
+    marginPct = cur.marginPct,
+    prevTotal = prev.revenue,
+    prevMarginPct = prev.marginPct;
+  const pct = percentChange;
   const chart = Array.from({ length: period }, (_, i) => {
     const date = new Date(first);
     date.setDate(first.getDate() + i);
@@ -190,10 +190,14 @@ export function Dashboard({
           ))}
         </div>
         <Btn onClick={refresh}>
-          <RefreshCw className={refreshing ? "spin" : ""} />
+          <RefreshCw />
           Actualizar
         </Btn>
       </div>
+      {loading || refreshing ? (
+        <DashboardSkeleton />
+      ) : (
+        <>
       <section className="kpi-grid">
         <Kpi
           icon={CircleDollarSign}
@@ -213,13 +217,13 @@ export function Dashboard({
           icon={TrendingUp}
           label="Ticket promedio"
           value={money(avg)}
-          delta={pct(avg, prevAvg)}
+          delta={pct(avg, prev.avgTicket)}
           tip="Ingreso promedio por pedido"
         />
         <Kpi
           icon={BarChart3}
           label="Margen bruto"
-          value={`${total ? (((total - costs) / total) * 100).toFixed(1) : "0.0"}%`}
+          value={`${marginPct.toFixed(1)}%`}
           delta={prevTotal ? marginPct - prevMarginPct : null}
           tip="Ingresos menos costos, como porcentaje"
         />
@@ -382,8 +386,10 @@ export function Dashboard({
       </section>
       <section className="dashboard-grid two">
         <Assistant />
-        <ActivityFeed activity={activity} />
+        <ActivityFeed activity={activity} loading={loading} />
       </section>
+        </>
+      )}
     </div>
   );
 }
