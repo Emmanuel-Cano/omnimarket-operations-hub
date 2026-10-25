@@ -67,7 +67,6 @@ import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import {
   STATUSES,
   STATUS_META,
-  seedOrders,
   money,
   shortDate,
 } from "@/lib/orders";

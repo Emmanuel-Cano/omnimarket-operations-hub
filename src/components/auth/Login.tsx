@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 
 import type { Order, Status, View, Toast } from "@/lib/types";
-import { STATUSES, STATUS_META, seedOrders, money, shortDate } from "@/lib/orders";
+import { STATUSES, STATUS_META, money, shortDate } from "@/lib/orders";
 import {Btn} from "@/components/ui/primitives";
 export function Login({ onLogin, theme, toggleTheme }: {onLogin:(p:'google'|'github')=>void;theme:string;toggleTheme:()=>void}) {
   return <main className="login-page">

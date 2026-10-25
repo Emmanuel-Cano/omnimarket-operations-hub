@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 
 import type { Order, Status, View, Toast, Ops } from "@/lib/types";
-import { STATUSES, STATUS_META, seedOrders, money, shortDate } from "@/lib/orders";
+import { STATUSES, STATUS_META, money, shortDate } from "@/lib/orders";
 import {Btn,Badge,Empty} from "@/components/ui/primitives";
 import {KanbanSkeleton} from "@/components/ui/skeletons";
 export function KanbanCard({o,onMove,dragging=false,dragHandle}:{o:Order;onMove?:(s:Status)=>void;dragging?:boolean;dragHandle?:Record<string,unknown>}) {

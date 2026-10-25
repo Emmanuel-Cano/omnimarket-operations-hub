@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@prisma/client'
-import { seedOrders } from '../orders'
+import { seedOrders } from './seed-orders'
 
 const map = { Pendiente: 'PENDIENTE', 'En proceso': 'EN_PROCESO', Enviado: 'ENVIADO', Entregado: 'ENTREGADO' } as const
 

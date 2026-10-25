@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 
 import type { Order, Status, View, Toast } from "@/lib/types";
-import { STATUSES, STATUS_META, seedOrders, money, shortDate } from "@/lib/orders";
+import { STATUSES, STATUS_META, money, shortDate } from "@/lib/orders";
 import {Btn} from "@/components/ui/primitives";
 export function Sidebar({ view, setView, collapsed, setCollapsed, mobile, close }: {view:View;setView:(v:View)=>void;collapsed:boolean;setCollapsed:(v:boolean)=>void;mobile:boolean;close:()=>void}) {
   const nav = [{id:'dashboard' as View,label:'Dashboard',icon:LayoutDashboard},{id:'orders' as View,label:'Pedidos',icon:ShoppingBag},{id:'kanban' as View,label:'Kanban',icon:Boxes}]

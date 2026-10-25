@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 
 import type { Order, Status, View, Toast } from "@/lib/types";
-import { STATUSES, STATUS_META, seedOrders, money, shortDate } from "@/lib/orders";
+import { STATUSES, STATUS_META, money, shortDate } from "@/lib/orders";
 export function Btn({ children, variant='secondary', className='', ...p }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary'|'secondary'|'ghost'|'danger' }) {
   return <button className={`btn btn-${variant} ${className}`} {...p}>{children}</button>
 }

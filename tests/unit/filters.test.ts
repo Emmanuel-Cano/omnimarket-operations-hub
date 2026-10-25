@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { filterOrders, paginate } from '@/lib/filters'
-import { seedOrders } from '@/lib/orders'
+import { seedOrders } from '@/lib/server/seed-orders'
 
 describe('lógica de filtrado', () => {
   it('sin filtros devuelve todos los pedidos', () => {
