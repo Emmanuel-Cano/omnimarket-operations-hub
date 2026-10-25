@@ -1,3 +1,4 @@
+import { denyAnonymous } from '@/lib/server/orders'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { buildSnapshot, llmContext, localAnswer } from '@/lib/server/insights'
@@ -8,6 +9,8 @@ export const maxDuration = 30
 const body = z.object({ question: z.string().trim().min(2).max(400) })
 
 export async function POST(req: Request) {
+  const denied = await denyAnonymous()
+  if (denied) return denied
   const p = body.safeParse(await req.json().catch(() => null))
   if (!p.success) return NextResponse.json({ error: 'Escribe una pregunta.' }, { status: 400 })
   const snap = await buildSnapshot()

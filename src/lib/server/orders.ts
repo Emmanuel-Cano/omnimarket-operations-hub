@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client'
 import type { Order, Status } from '@/lib/types'
+import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { prisma } from './db'
 
@@ -51,3 +52,10 @@ export async function upsertRefs(tx: Prisma.TransactionClient, d: import('@/lib/
 }
 
 export { prisma }
+
+/** Defensa en profundidad: aunque el middleware ya protege /api/*, cada handler exige sesión. */
+export async function denyAnonymous() {
+  const s = await auth()
+  if (!s?.user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+  return null
+}

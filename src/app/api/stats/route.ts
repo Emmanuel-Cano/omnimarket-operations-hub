@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/server/db'
-import { fromDb } from '@/lib/server/orders'
+import { fromDb, denyAnonymous } from '@/lib/server/orders'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
+  const denied = await denyAnonymous()
+  if (denied) return denied
   const items = await prisma.orderItem.findMany({ include: { order: true } })
   let revenue = 0, margin = 0, units = 0
   const byStatus: Record<string, number> = {}, byDay: Record<string, number> = {}

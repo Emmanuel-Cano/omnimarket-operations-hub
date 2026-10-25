@@ -8,7 +8,7 @@ import type { Provider } from 'next-auth/providers'
 const providers: Provider[] = [Google, GitHub]
 
 // Sesión simulada SOLO para pruebas E2E. Nunca definas E2E_TEST_MODE en producción.
-if (process.env.E2E_TEST_MODE === 'true') {
+if (process.env.E2E_TEST_MODE === 'true' && process.env.VERCEL_ENV !== 'production') {
   providers.push(
     Credentials({
       id: 'e2e',
@@ -24,4 +24,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: 'jwt' },
   pages: { signIn: '/' },
   trustHost: true,
+  callbacks: {
+    // Lista blanca opcional: AUTH_ALLOWED_EMAILS="a@x.com,b@y.com". Vacía = cualquier cuenta autenticada.
+    signIn({ user }) {
+      const allowed = (process.env.AUTH_ALLOWED_EMAILS ?? '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
+      if (!allowed.length) return true
+      return !!user.email && allowed.includes(user.email.toLowerCase())
+    },
+  },
 })

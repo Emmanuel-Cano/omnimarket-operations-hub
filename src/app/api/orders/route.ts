@@ -1,14 +1,18 @@
 import { NextResponse } from 'next/server'
-import { getActor, include, log, nextFolio, orderInput, prisma, serialize, toDb, upsertRefs } from '@/lib/server/orders'
+import { getActor, include, log, nextFolio, orderInput, prisma, serialize, toDb, upsertRefs, denyAnonymous } from '@/lib/server/orders'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
+  const denied = await denyAnonymous()
+  if (denied) return denied
   const rows = await prisma.order.findMany({ include, orderBy: [{ date: 'desc' }, { id: 'desc' }] })
   return NextResponse.json(rows.map(serialize))
 }
 
 export async function POST(req: Request) {
+  const denied = await denyAnonymous()
+  if (denied) return denied
   const actor = await getActor()
   const parsed = orderInput.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ errors: parsed.error.issues.map(i => ({ field: String(i.path[0]), message: i.message })) }, { status: 400 })

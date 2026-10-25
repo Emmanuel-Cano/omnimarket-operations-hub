@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 import { batchSchema } from '@/lib/schemas'
-import { getActor, log, prisma, toDb } from '@/lib/server/orders'
+import { getActor, log, prisma, toDb, denyAnonymous } from '@/lib/server/orders'
 
 export async function POST(req: Request) {
+  const denied = await denyAnonymous()
+  if (denied) return denied
   const actor = await getActor()
   const p = batchSchema.safeParse(await req.json().catch(() => null))
   if (!p.success || (p.data.action === 'status' && !p.data.status)) return NextResponse.json({ error: 'Solicitud no válida' }, { status: 400 })

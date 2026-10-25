@@ -1,16 +1,20 @@
 import { NextResponse } from 'next/server'
-import { getActor, include, log, orderInput, prisma, serialize, toDb, upsertRefs } from '@/lib/server/orders'
+import { getActor, include, log, orderInput, prisma, serialize, toDb, upsertRefs, denyAnonymous } from '@/lib/server/orders'
 
 export const dynamic = 'force-dynamic'
 type Ctx = { params: Promise<{ id: string }> }
 
 export async function GET(_: Request, { params }: Ctx) {
+  const denied = await denyAnonymous()
+  if (denied) return denied
   const { id } = await params
   const o = await prisma.order.findUnique({ where: { id }, include })
   return o ? NextResponse.json(serialize(o)) : NextResponse.json({ error: 'No encontrado' }, { status: 404 })
 }
 
 export async function PATCH(req: Request, { params }: Ctx) {
+  const denied = await denyAnonymous()
+  if (denied) return denied
   const actor = await getActor()
   const { id } = await params
   const parsed = orderInput.partial().safeParse(await req.json().catch(() => null))
@@ -36,6 +40,8 @@ export async function PATCH(req: Request, { params }: Ctx) {
 }
 
 export async function DELETE(_: Request, { params }: Ctx) {
+  const denied = await denyAnonymous()
+  if (denied) return denied
   const actor = await getActor()
   const { id } = await params
   const o = await prisma.order.findUnique({ where: { id }, include })
