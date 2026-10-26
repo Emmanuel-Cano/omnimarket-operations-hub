@@ -1,4 +1,4 @@
 {
   "ignoreCommand": "node scripts/vercel-ignore.mjs",
-  "buildCommand": "prisma generate && prisma db push --skip-generate && next build"
+  "buildCommand": "prisma generate && prisma db push --skip-generate --accept-data-loss && next build"
 }
