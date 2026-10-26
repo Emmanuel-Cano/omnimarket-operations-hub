@@ -18,7 +18,7 @@ export default function OmniMarketApp(){
  const [hydrated,setHydrated]=useState(false);
  const {data:session,status:authStatus}=useSession();
  const logged=authStatus==='authenticated';
- const [theme,setTheme]=useState('light');
+ const [theme,setTheme]=useState('dark');
  const [collapsed,setCollapsed]=useState(false),[mobile,setMobile]=useState(false);
  const [orders,setOrders]=useState<Order[]>([]);
  const [activity,setActivity]=useState<Activity[]>([]);
@@ -27,7 +27,7 @@ export default function OmniMarketApp(){
  const [toasts,setToasts]=useState<Toast[]>([]);
  const view:View=pathname==='/pedidos'?'orders':pathname==='/kanban'?'kanban':'dashboard';
  useEffect(()=>{
-   setTheme(localStorage.getItem('omni-theme')||'light');
+   setTheme(localStorage.getItem('omni-theme')||'dark');
    setHydrated(true);
  },[]);
  useEffect(()=>{if(hydrated){document.documentElement.dataset.theme=theme;localStorage.setItem('omni-theme',theme)}},[theme,hydrated]);
