@@ -23,6 +23,7 @@ const body = (o: unknown) => JSON.stringify(o)
 const input = ({ id: _id, ...rest }: Order) => rest
 
 export const api = {
+  loadDemo: () => http<{ ok: true; orders: number }>('/api/demo-data', { method: 'POST' }),
   list: () => http<Order[]>('/api/orders'),
   create: (o: Order) => http<Order>('/api/orders', { method: 'POST', body: body(input(o)) }),
   update: (o: Order) => http<Order>(`/api/orders/${o.id}`, { method: 'PATCH', body: body(input(o)) }),

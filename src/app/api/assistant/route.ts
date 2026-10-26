@@ -1,4 +1,4 @@
-import { denyAnonymous } from '@/lib/server/orders'
+import { denyAnonymous, getOwner } from '@/lib/server/orders'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { buildSnapshot, llmContext, localAnswer } from '@/lib/server/insights'
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   if (denied) return denied
   const p = body.safeParse(await req.json().catch(() => null))
   if (!p.success) return NextResponse.json({ error: 'Escribe una pregunta.' }, { status: 400 })
-  const snap = await buildSnapshot()
+  const snap = await buildSnapshot(await getOwner())
   const key = process.env.ANTHROPIC_API_KEY
 
   if (key) {

@@ -3,8 +3,8 @@ import { fromDb } from './orders'
 
 const money = (n: number) => n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })
 
-export async function buildSnapshot() {
-  const orders = await prisma.order.findMany({ include: { customer: true, items: { include: { product: true } } } })
+export async function buildSnapshot(ownerId: string) {
+  const orders = await prisma.order.findMany({ where: { ownerId }, include: { customer: true, items: { include: { product: true } } } })
   const today = new Date()
   const rows = orders.map(o => {
     const it = o.items[0]
@@ -33,6 +33,7 @@ type Snap = Awaited<ReturnType<typeof buildSnapshot>>
 
 /** Respuestas locales (sin LLM) para que la demo funcione aunque no haya API key. */
 export function localAnswer(q: string, s: Snap): string {
+  if (!s.rows.length) return 'Todavía no tienes pedidos. Crea uno en Pedidos o carga los datos de ejemplo desde el Dashboard y te cuento qué pasa en tu operación.'
   const t = q.toLowerCase()
   const topRev = [...s.products].sort((a, b) => b.revenue - a.revenue)[0]
   const topMargin = [...s.products].sort((a, b) => b.marginPct - a.marginPct)[0]

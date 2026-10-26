@@ -28,6 +28,14 @@ export function serialize(o: Row): Order {
   }
 }
 
+/** Dueño de los datos: el correo de la sesión. La cuenta de pruebas E2E usa el conjunto "demo" que restablece /api/test/reset-data. */
+export async function getOwner() {
+  const s = await auth()
+  const e = s?.user?.email?.toLowerCase()
+  return !e || e === 'e2e@test.local' ? 'demo' : e
+}
+
+/** El folio es único en toda la base (clave primaria), así que se calcula con el máximo global. */
 export async function nextFolio(tx: Prisma.TransactionClient) {
   const all = await tx.order.findMany({ select: { id: true } })
   const max = all.reduce((m, { id }) => Math.max(m, Number(id.replace('OM-', '')) || 0), 1000)
@@ -40,14 +48,14 @@ export async function getActor() {
   return s?.user?.email ?? s?.user?.name ?? 'sistema'
 }
 
-export async function log(tx: Prisma.TransactionClient, orderId: string, action: string, detail: string, actor = 'sistema') {
-  await tx.auditLog.create({ data: { orderId, action, detail, actor } })
+export async function log(tx: Prisma.TransactionClient, orderId: string, action: string, detail: string, actor = 'sistema', ownerId = 'demo') {
+  await tx.auditLog.create({ data: { orderId, action, detail, actor, ownerId } })
 }
 
 /** Crea/actualiza cliente y producto por clave natural y devuelve sus ids. */
-export async function upsertRefs(tx: Prisma.TransactionClient, d: import('@/lib/schemas').OrderInput) {
-  const customer = await tx.customer.upsert({ where: { email: d.email }, update: { name: d.customer }, create: { name: d.customer, email: d.email } })
-  const product = await tx.product.upsert({ where: { name: d.product }, update: {}, create: { name: d.product, price: d.price, cost: d.cost } })
+export async function upsertRefs(tx: Prisma.TransactionClient, d: import('@/lib/schemas').OrderInput, ownerId: string) {
+  const customer = await tx.customer.upsert({ where: { ownerId_email: { ownerId, email: d.email } }, update: { name: d.customer }, create: { name: d.customer, email: d.email, ownerId } })
+  const product = await tx.product.upsert({ where: { ownerId_name: { ownerId, name: d.product } }, update: {}, create: { name: d.product, price: d.price, cost: d.cost, ownerId } })
   return { customer, product }
 }
 

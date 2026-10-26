@@ -18,13 +18,13 @@ export async function GET(req: Request) {
   const [totals, byDay, byStatus, rows, total] = await Promise.all([
     prisma.$queryRaw<Totals[]>`SELECT COUNT(DISTINCT o.id)::int AS orders, COALESCE(SUM(i.quantity),0)::int AS units,
       COALESCE(SUM(i.price*i.quantity),0)::float8 AS revenue, COALESCE(SUM(i.cost*i.quantity),0)::float8 AS cost
-      FROM "Order" o JOIN "OrderItem" i ON i."orderId" = o.id`,
+      FROM "Order" o JOIN "OrderItem" i ON i."orderId" = o.id WHERE o."ownerId" = 'demo'`,
     prisma.$queryRaw<Day[]>`SELECT to_char(o.date,'YYYY-MM-DD') AS date, SUM(i.price*i.quantity)::float8 AS sales,
-      SUM((i.price-i.cost)*i.quantity)::float8 AS margin FROM "Order" o JOIN "OrderItem" i ON i."orderId" = o.id
+      SUM((i.price-i.cost)*i.quantity)::float8 AS margin FROM "Order" o JOIN "OrderItem" i ON i."orderId" = o.id WHERE o."ownerId" = 'demo'
       GROUP BY o.date ORDER BY o.date`,
-    prisma.order.groupBy({ by: ['status'], _count: true }),
-    prisma.order.findMany({ include, orderBy: [{ date: 'desc' }, { id: 'desc' }], skip: (page - 1) * limit, take: limit }),
-    prisma.order.count(),
+    prisma.order.groupBy({ by: ['status'], where: { ownerId: 'demo' }, _count: true }),
+    prisma.order.findMany({ where: { ownerId: 'demo' }, include, orderBy: [{ date: 'desc' }, { id: 'desc' }], skip: (page - 1) * limit, take: limit }),
+    prisma.order.count({ where: { ownerId: 'demo' } }),
   ])
 
   const t = totals[0] ?? { orders: 0, units: 0, revenue: 0, cost: 0 }

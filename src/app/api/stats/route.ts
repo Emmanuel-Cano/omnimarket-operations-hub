@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/server/db'
-import { fromDb, denyAnonymous } from '@/lib/server/orders'
+import { fromDb, denyAnonymous, getOwner } from '@/lib/server/orders'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   const denied = await denyAnonymous()
   if (denied) return denied
-  const items = await prisma.orderItem.findMany({ include: { order: true } })
+  const owner = await getOwner()
+  const items = await prisma.orderItem.findMany({ where: { order: { ownerId: owner } }, include: { order: true } })
   let revenue = 0, margin = 0, units = 0
   const byStatus: Record<string, number> = {}, byDay: Record<string, number> = {}
   const orderIds = new Set<string>()
@@ -18,7 +19,7 @@ export async function GET() {
     const day = i.order.date.toISOString().slice(0, 10)
     byDay[day] = (byDay[day] ?? 0) + rev
   }
-  const orders = await prisma.order.groupBy({ by: ['status'], _count: true })
+  const orders = await prisma.order.groupBy({ by: ['status'], where: { ownerId: owner }, _count: true })
   for (const g of orders) byStatus[fromDb[g.status]] = g._count
   const total = orderIds.size
   return NextResponse.json({

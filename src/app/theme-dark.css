@@ -102,3 +102,8 @@ body{font-family:var(--font-ui);font-feature-settings:'ss01','cv11';-webkit-font
 [data-theme=dark] .skeleton{background:linear-gradient(90deg,#141824 25%,#1c2130 50%,#141824 75%);background-size:200% 100%}
 
 @media (prefers-reduced-motion:reduce){[data-theme=dark] .kpi,[data-theme=dark] .kanban-card{transition:none}}
+
+.welcome{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:20px 28px 0;padding:16px 20px;border-radius:14px;border:1px dashed var(--primary);background:var(--primary-soft)}
+.welcome strong{display:block;font-size:15px;margin-bottom:2px}
+.welcome span{color:var(--muted);font-size:13px}
+.welcome-actions{display:flex;gap:10px;flex-wrap:wrap}

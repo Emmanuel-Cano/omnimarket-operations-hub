@@ -10,12 +10,12 @@ export const dynamic = 'force-dynamic'
 export async function GET(req: Request) {
   const id = new URL(req.url).searchParams.get('id')
   if (!id) {
-    const groups = await prisma.order.groupBy({ by: ['status'], _count: true })
+    const groups = await prisma.order.groupBy({ by: ['status'], where: { ownerId: 'demo' }, _count: true })
     const counts = Object.fromEntries(STATUSES.map(s => [s, 0]))
     for (const g of groups) counts[fromDb[g.status]] = g._count
     return NextResponse.json({ columns: STATUSES, counts }, { headers: { 'Cache-Control': 'no-store' } })
   }
-  const o = await prisma.order.findUnique({ where: { id }, select: { id: true, status: true, updatedAt: true } })
+  const o = await prisma.order.findFirst({ where: { id, ownerId: 'demo' }, select: { id: true, status: true, updatedAt: true } })
   if (!o) return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 })
   const status = fromDb[o.status]
   return NextResponse.json({ id: o.id, status, column: STATUSES.indexOf(status), updatedAt: o.updatedAt.toISOString() }, { headers: { 'Cache-Control': 'no-store' } })

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getActor, include, log, orderInput, prisma, serialize, toDb, upsertRefs, denyAnonymous } from '@/lib/server/orders'
+import { getActor, include, log, orderInput, prisma, serialize, toDb, upsertRefs, denyAnonymous, getOwner } from '@/lib/server/orders'
 
 export const dynamic = 'force-dynamic'
 type Ctx = { params: Promise<{ id: string }> }
@@ -8,7 +8,8 @@ export async function GET(_: Request, { params }: Ctx) {
   const denied = await denyAnonymous()
   if (denied) return denied
   const { id } = await params
-  const o = await prisma.order.findUnique({ where: { id }, include })
+  const owner = await getOwner()
+  const o = await prisma.order.findFirst({ where: { id, ownerId: owner }, include })
   return o ? NextResponse.json(serialize(o)) : NextResponse.json({ error: 'No encontrado' }, { status: 404 })
 }
 
@@ -17,9 +18,10 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (denied) return denied
   const actor = await getActor()
   const { id } = await params
+  const owner = await getOwner()
   const parsed = orderInput.partial().safeParse(await req.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ errors: parsed.error.issues.map(i => ({ field: String(i.path[0]), message: i.message })) }, { status: 400 })
-  const before = await prisma.order.findUnique({ where: { id }, include })
+  const before = await prisma.order.findFirst({ where: { id, ownerId: owner }, include })
   if (!before) return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
   const cur = serialize(before)
   const d = { ...cur, ...parsed.data }
@@ -27,13 +29,13 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (!full.success) return NextResponse.json({ errors: full.error.issues.map(i => ({ field: String(i.path[0]), message: i.message })) }, { status: 400 })
 
   const updated = await prisma.$transaction(async tx => {
-    const { customer, product } = await upsertRefs(tx, full.data)
+    const { customer, product } = await upsertRefs(tx, full.data, owner)
     await tx.order.update({ where: { id }, data: { customerId: customer.id, status: toDb[full.data.status], date: new Date(`${full.data.date}T00:00:00Z`) } })
     await tx.orderItem.deleteMany({ where: { orderId: id } })
     await tx.orderItem.create({ data: { orderId: id, productId: product.id, quantity: full.data.quantity, price: full.data.price, cost: full.data.cost } })
     const onlyStatus = Object.keys(parsed.data).length === 1 && parsed.data.status
-    if (onlyStatus) await log(tx, id, 'STATUS', `Estado: ${cur.status} → ${full.data.status}`, actor)
-    else await log(tx, id, 'UPDATE', `Pedido editado${cur.status !== full.data.status ? ` (estado: ${cur.status} → ${full.data.status})` : ''}`, actor)
+    if (onlyStatus) await log(tx, id, 'STATUS', `Estado: ${cur.status} → ${full.data.status}`, actor, owner)
+    else await log(tx, id, 'UPDATE', `Pedido editado${cur.status !== full.data.status ? ` (estado: ${cur.status} → ${full.data.status})` : ''}`, actor, owner)
     return tx.order.findUniqueOrThrow({ where: { id }, include })
   })
   return NextResponse.json(serialize(updated))
@@ -44,11 +46,12 @@ export async function DELETE(_: Request, { params }: Ctx) {
   if (denied) return denied
   const actor = await getActor()
   const { id } = await params
-  const o = await prisma.order.findUnique({ where: { id }, include })
+  const owner = await getOwner()
+  const o = await prisma.order.findFirst({ where: { id, ownerId: owner }, include })
   if (!o) return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
   await prisma.$transaction(async tx => {
     await tx.order.delete({ where: { id } })
-    await log(tx, id, 'DELETE', `Pedido eliminado (${o.customer.name})`, actor)
+    await log(tx, id, 'DELETE', `Pedido eliminado (${o.customer.name})`, actor, owner)
   })
   return NextResponse.json({ ok: true })
 }

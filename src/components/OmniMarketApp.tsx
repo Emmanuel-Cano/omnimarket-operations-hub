@@ -2,7 +2,7 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {usePathname,useRouter} from 'next/navigation';
 import {signIn,signOut,useSession} from 'next-auth/react';
-import {Check,AlertTriangle,Undo2,X} from 'lucide-react';
+import {Check,AlertTriangle,Undo2,X,Sparkles,Plus} from 'lucide-react';
 import {Login} from '@/components/auth/Login';
 import {AppSkeleton} from '@/components/ui/skeletons';
 import {Sidebar,Header} from '@/components/layout/ShellNavigation';
@@ -83,6 +83,7 @@ export default function OmniMarketApp(){
      notify({kind:'success',text:`Pedidos actualizados a “${s}”.`});
    },
  };
+ const loadDemo=async()=>{const r=await run(()=>api.loadDemo());if(r){await refresh();notify({kind:'success',text:'Datos de ejemplo cargados. Puedes borrarlos cuando quieras.'})}};
  const login=(provider:'google'|'github')=>{void signIn(provider,{callbackUrl:'/dashboard'})};
  const logout=()=>{void signOut({callbackUrl:'/'})};
  const toggleTheme=()=>setTheme(t=>t==='dark'?'light':'dark');
@@ -94,6 +95,7 @@ export default function OmniMarketApp(){
  <Sidebar view={view} setView={setView} collapsed={collapsed} setCollapsed={setCollapsed} mobile={mobile} close={()=>setMobile(false)}/>
  {mobile&&<div className="scrim" onClick={()=>setMobile(false)}/>}
  <div className="main"><Header view={view} user={session?.user} theme={theme} toggleTheme={toggleTheme} onLogout={logout} openMenu={()=>setMobile(true)}/>
+ {!loading&&!loadError&&orders.length===0&&<div className="welcome"><div><strong>Tu cuenta está vacía</strong><span>Aquí solo verás tus propios pedidos. Crea el primero o carga datos de ejemplo para explorar el tablero.</span></div><div className="welcome-actions"><button className="btn btn-primary" onClick={()=>void loadDemo()}><Sparkles/>Cargar datos de ejemplo</button>{view!=='orders'&&<button className="btn btn-secondary" onClick={()=>setView('orders')}><Plus/>Crear mi primer pedido</button>}</div></div>}
  {view==='dashboard'?<Dashboard orders={orders} activity={activity} loading={loading} error={loadError} onRefresh={refresh} setView={setView}/>:view==='orders'?<Orders orders={orders} ops={ops} loading={loading} error={loadError}/>:<Kanban orders={orders} ops={ops} loading={loading}/>}
  </div><div className="toast-stack">{toasts.map(t=><div className={`toast ${t.kind}`} key={t.id}>{t.kind==='success'?<Check/>:<AlertTriangle/>}<span>{t.text}</span>{t.undo&&<button onClick={()=>{t.undo?.();setToasts(x=>x.filter(v=>v.id!==t.id))}}><Undo2/>Deshacer</button>}<button onClick={()=>setToasts(x=>x.filter(v=>v.id!==t.id))}><X/></button></div>)}</div></div>;
 }
